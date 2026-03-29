@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pixel Physics Sandbox</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      user-select: none;
+    }
+
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    #ui-overlay {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    #instructions {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 11px;
+      text-align: center;
+      letter-spacing: 0.3px;
+    }
+
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 8px 12px;
+      pointer-events: all;
+      backdrop-filter: blur(6px);
+    }
+
+    #palette {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .mat-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .mat-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .mat-btn.active {
+      border-color: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+    }
+
+    .mat-circle {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .mat-label {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 9px;
+      text-align: center;
+      line-height: 1;
+      letter-spacing: 0.2px;
+    }
+
+    .toolbar-sep {
+      width: 1px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.15);
+      margin: 0 2px;
+    }
+
+    #brush-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      min-width: 48px;
+    }
+
+    #brush-label {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 9px;
+    }
+
+    #brush-size-display {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    #clear-btn {
+      background: rgba(200, 60, 60, 0.6);
+      border: 1px solid rgba(255, 100, 100, 0.4);
+      border-radius: 8px;
+      color: rgba(255, 255, 255, 0.9);
+      cursor: pointer;
+      font-size: 11px;
+      padding: 6px 10px;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    #clear-btn:hover {
+      background: rgba(220, 80, 80, 0.8);
+    }
+
+    #mode-indicator {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: rgba(255,255,255,0.7);
+      font-size: 10px;
+      min-width: 48px;
+      justify-content: center;
+    }
+
+    #mode-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4af;
+    }
+
+    #mode-dot.erase {
+      background: #f44;
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <div id="ui-overlay">
+    <div id="instructions">
+      Keys 1–9, 0, Q–R to pick material &nbsp;|&nbsp;
+      [ / ] brush size &nbsp;|&nbsp;
+      C clear &nbsp;|&nbsp;
+      Z toggle erase &nbsp;|&nbsp;
+      RMB erase
+    </div>
+    <div id="toolbar">
+      <div id="palette"></div>
+      <div class="toolbar-sep"></div>
+      <div id="brush-info">
+        <span id="brush-label">BRUSH</span>
+        <span id="brush-size-display">5</span>
+      </div>
+      <div class="toolbar-sep"></div>
+      <div id="mode-indicator">
+        <div id="mode-dot"></div>
+        <span id="mode-text">DRAW</span>
+      </div>
+      <div class="toolbar-sep"></div>
+      <button id="clear-btn">CLEAR</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
