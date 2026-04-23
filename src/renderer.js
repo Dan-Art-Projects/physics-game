@@ -41,30 +41,14 @@ export class Renderer {
     const w = window.innerWidth;
     const h = window.innerHeight;
     this.renderer.setSize(w, h);
-
-    // Compute actual pixel dimensions of the sim canvas inside the window
-    // Maintain aspect ratio of GRID_W:GRID_H
-    const simAspect = GRID_W / GRID_H;
-    const winAspect = w / h;
-
-    if (winAspect > simAspect) {
-      // Letterbox: height-constrained
-      this.displayH = h;
-      this.displayW = Math.floor(h * simAspect);
-    } else {
-      // Pillarbox: width-constrained
-      this.displayW = w;
-      this.displayH = Math.floor(w / simAspect);
-    }
-
-    this.offsetX = Math.floor((w - this.displayW) / 2);
-    this.offsetY = Math.floor((h - this.displayH) / 2);
+    this.displayW = w;
+    this.displayH = h;
   }
 
   // Convert screen pixel (px, py) → sim grid cell (gx, gy)
   screenToGrid(px, py) {
-    const gx = Math.floor((px - this.offsetX) / this.displayW  * GRID_W);
-    const gy = Math.floor((py - this.offsetY) / this.displayH  * GRID_H);
+    const gx = Math.floor(px / this.displayW  * GRID_W);
+    const gy = Math.floor(py / this.displayH * GRID_H);
     return { gx, gy };
   }
 
