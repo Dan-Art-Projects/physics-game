@@ -101,7 +101,9 @@ let lastTouchX = -1, lastTouchY = -1;
 canvas.addEventListener('touchstart', (e) => {
   e.preventDefault();
   const t = e.touches[0];
-  lastTouchX = -1; lastTouchY = -1;
+  const { gx, gy } = renderer.screenToGrid(t.clientX, t.clientY);
+  lastTouchX = gx;
+  lastTouchY = gy;
   paintAt(t.clientX, t.clientY, ui.eraseMode);
 }, { passive: false });
 

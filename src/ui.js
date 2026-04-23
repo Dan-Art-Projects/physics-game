@@ -14,6 +14,8 @@ export class UI {
     this._buildPalette();
     this._bindClear();
     this._bindKeyboard();
+    this._bindBrushButtons();
+    this._bindModeToggle();
     this._updateBrushDisplay();
     this._updateModeDisplay();
   }
@@ -119,6 +121,21 @@ export class UI {
     const text = document.getElementById('mode-text');
     if (dot)  dot.classList.toggle('erase', this.eraseMode);
     if (text) text.textContent = this.eraseMode ? 'ERASE' : 'DRAW';
+  }
+
+  _bindBrushButtons() {
+    const up   = document.getElementById('brush-up');
+    const down = document.getElementById('brush-down');
+    if (up)   up.addEventListener('click',   () => { this.brushSize = Math.min(50, this.brushSize + 1); this._updateBrushDisplay(); });
+    if (down) down.addEventListener('click', () => { this.brushSize = Math.max(1,  this.brushSize - 1); this._updateBrushDisplay(); });
+  }
+
+  _bindModeToggle() {
+    const el = document.getElementById('mode-indicator');
+    if (el) el.addEventListener('click', () => {
+      this.eraseMode = !this.eraseMode;
+      this._updateModeDisplay();
+    });
   }
 
   onScroll(delta) {
