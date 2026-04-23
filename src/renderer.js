@@ -1,37 +1,18 @@
-import * as THREE from 'three';
-import { MAT, MATERIALS, getBaseColor } from './materials.js';
+import { MAT } from './materials.js';
 import { GRID_W, GRID_H } from './simulation.js';
 
 export class Renderer {
   constructor(container) {
-    this.container = container;
+    this.canvas = document.createElement('canvas');
+    this.canvas.style.display = 'block';
+    this.canvas.style.touchAction = 'none';
+    container.appendChild(this.canvas);
 
-    // Scene setup
-    this.scene    = new THREE.Scene();
-    this.camera   = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    this.ctx = this.canvas.getContext('2d');
+    this.imageData = new ImageData(GRID_W, GRID_H);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: false });
-    this.renderer.setPixelRatio(1);
-    container.appendChild(this.renderer.domElement);
-
-    // RGBA texture buffer: texture Y=0 is bottom, sim Y=0 is top → flip Y
-    this.texData = new Uint8Array(GRID_W * GRID_H * 4);
-
-    this.texture = new THREE.DataTexture(
-      this.texData,
-      GRID_W,
-      GRID_H,
-      THREE.RGBAFormat,
-      THREE.UnsignedByteType,
-    );
-    this.texture.magFilter = THREE.NearestFilter;
-    this.texture.minFilter = THREE.NearestFilter;
-    this.texture.needsUpdate = true;
-
-    const geo  = new THREE.PlaneGeometry(2, 2);
-    const mat  = new THREE.MeshBasicMaterial({ map: this.texture });
-    const mesh = new THREE.Mesh(geo, mat);
-    this.scene.add(mesh);
+    this.displayW = 1;
+    this.displayH = 1;
 
     this.resize();
     window.addEventListener('resize', () => this.resize());
@@ -40,46 +21,42 @@ export class Renderer {
   resize() {
     const w = window.innerWidth;
     const h = window.innerHeight;
-    this.renderer.setSize(w, h);
     this.displayW = w;
     this.displayH = h;
+    this.canvas.width  = GRID_W;
+    this.canvas.height = GRID_H;
+    this.canvas.style.width  = w + 'px';
+    this.canvas.style.height = h + 'px';
   }
 
-  // Convert screen pixel (px, py) → sim grid cell (gx, gy)
   screenToGrid(px, py) {
-    const gx = Math.floor(px / this.displayW  * GRID_W);
+    const gx = Math.floor(px / this.displayW * GRID_W);
     const gy = Math.floor(py / this.displayH * GRID_H);
     return { gx, gy };
   }
 
   updateTexture(sim) {
     const { type, life, cv } = sim;
-    const buf = this.texData;
+    const data = this.imageData.data;
 
-    for (let sy = 0; sy < GRID_H; sy++) {
-      // Flip Y: sim row 0 (top) → texture row GRID_H-1 (top in GL = bottom-most data)
-      const ty = GRID_H - 1 - sy;
-      const simRowStart = sy  * GRID_W;
-      const texRowStart = ty  * GRID_W;
-
+    for (let y = 0; y < GRID_H; y++) {
       for (let x = 0; x < GRID_W; x++) {
-        const si = simRowStart + x;
-        const ti = (texRowStart + x) * 4;
-        const mat = type[si];
-
-        const [r, g, b] = this._cellColor(mat, life[si], cv[si]);
-        buf[ti    ] = r;
-        buf[ti + 1] = g;
-        buf[ti + 2] = b;
-        buf[ti + 3] = 255;
+        const i  = y * GRID_W + x;
+        const di = i * 4;
+        const [r, g, b] = this._cellColor(type[i], life[i], cv[i]);
+        data[di    ] = r;
+        data[di + 1] = g;
+        data[di + 2] = b;
+        data[di + 3] = 255;
       }
     }
+  }
 
-    this.texture.needsUpdate = true;
+  render() {
+    this.ctx.putImageData(this.imageData, 0, 0);
   }
 
   _cellColor(mat, life, cvByte) {
-    // Map cvByte (0-255) to variation offset in range [-15, +15]
     const vari = (cvByte / 255) * 30 - 15;
 
     switch (mat) {
@@ -102,16 +79,11 @@ export class Renderer {
       }
 
       case MAT.FIRE: {
-        // life fades from high→0; high life = white-yellow, low life = deep red
-        const t = life / 150; // 0..1
-        const r = clamp(Math.round(255), 0, 255);
-        const g = clamp(Math.round(t * t * 200), 0, 255);
-        const b = clamp(Math.round(t * t * 40), 0, 255);
-        return [r, g, b];
+        const t = life / 150;
+        return [255, clamp(Math.round(t * t * 200), 0, 255), clamp(Math.round(t * t * 40), 0, 255)];
       }
 
       case MAT.SMOKE: {
-        // Fades from gray to black
         const t = life / 100;
         const v = clamp(Math.round(80 * t + vari * t), 0, 255);
         return [v, v, clamp(v + 5, 0, 255)];
@@ -123,12 +95,11 @@ export class Renderer {
       }
 
       case MAT.LAVA: {
-        // Pulse using life (life is 0 for lava, use cvByte as pseudo-time)
         const pulse = Math.sin(cvByte * 0.05) * 15;
         return [
           clamp(220 + (pulse | 0), 0, 255),
           clamp(90  + ((pulse * 0.3) | 0), 0, 255),
-          clamp(10, 0, 255),
+          10,
         ];
       }
 
@@ -164,12 +135,8 @@ export class Renderer {
       }
 
       default:
-        return [255, 0, 255]; // magenta = unknown
+        return [255, 0, 255];
     }
-  }
-
-  render() {
-    this.renderer.render(this.scene, this.camera);
   }
 }
 

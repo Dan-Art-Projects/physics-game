@@ -51,7 +51,7 @@ function paintLine(x0, y0, x1, y1, erase) {
   }
 }
 
-const canvas = renderer.renderer.domElement;
+const canvas = renderer.canvas;
 
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
