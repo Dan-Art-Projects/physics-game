@@ -3,16 +3,22 @@ import { GRID_W, GRID_H } from './simulation.js';
 
 export class Renderer {
   constructor(container) {
+    // Main canvas — full viewport size
     this.canvas = document.createElement('canvas');
     this.canvas.style.display = 'block';
     this.canvas.style.touchAction = 'none';
     container.appendChild(this.canvas);
-
     this.ctx = this.canvas.getContext('2d');
+
+    // Offscreen canvas at simulation resolution — putImageData writes here
+    this.offscreen = document.createElement('canvas');
+    this.offscreen.width  = GRID_W;
+    this.offscreen.height = GRID_H;
+    this.offCtx = this.offscreen.getContext('2d');
     this.imageData = new ImageData(GRID_W, GRID_H);
 
-    this.displayW = 1;
-    this.displayH = 1;
+    this.displayW = window.innerWidth;
+    this.displayH = window.innerHeight;
 
     this.resize();
     window.addEventListener('resize', () => this.resize());
@@ -23,10 +29,9 @@ export class Renderer {
     const h = window.innerHeight;
     this.displayW = w;
     this.displayH = h;
-    this.canvas.width  = GRID_W;
-    this.canvas.height = GRID_H;
-    this.canvas.style.width  = w + 'px';
-    this.canvas.style.height = h + 'px';
+    this.canvas.width  = w;
+    this.canvas.height = h;
+    this.ctx.imageSmoothingEnabled = false;
   }
 
   screenToGrid(px, py) {
@@ -53,7 +58,8 @@ export class Renderer {
   }
 
   render() {
-    this.ctx.putImageData(this.imageData, 0, 0);
+    this.offCtx.putImageData(this.imageData, 0, 0);
+    this.ctx.drawImage(this.offscreen, 0, 0, this.displayW, this.displayH);
   }
 
   _cellColor(mat, life, cvByte) {
