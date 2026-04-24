@@ -3,40 +3,36 @@ import { GRID_W, GRID_H } from './simulation.js';
 
 export class Renderer {
   constructor(container) {
-    // Main canvas — full viewport size
     this.canvas = document.createElement('canvas');
-    this.canvas.style.display = 'block';
-    this.canvas.style.touchAction = 'none';
+    this.canvas.width  = GRID_W;
+    this.canvas.height = GRID_H;
+
+    // CSS fills the viewport; no JS sizing math needed
+    Object.assign(this.canvas.style, {
+      position:       'fixed',
+      top:            '0',
+      left:           '0',
+      width:          '100%',
+      height:         '100%',
+      display:        'block',
+      touchAction:    'none',
+      imageRendering: 'pixelated',
+    });
+
     container.appendChild(this.canvas);
     this.ctx = this.canvas.getContext('2d');
-
-    // Offscreen canvas at simulation resolution — putImageData writes here
-    this.offscreen = document.createElement('canvas');
-    this.offscreen.width  = GRID_W;
-    this.offscreen.height = GRID_H;
-    this.offCtx = this.offscreen.getContext('2d');
     this.imageData = new ImageData(GRID_W, GRID_H);
-
-    this.displayW = window.innerWidth;
-    this.displayH = window.innerHeight;
-
-    this.resize();
-    window.addEventListener('resize', () => this.resize());
   }
 
-  resize() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    this.displayW = w;
-    this.displayH = h;
-    this.canvas.width  = w;
-    this.canvas.height = h;
-    this.ctx.imageSmoothingEnabled = false;
-  }
+  // No-op — CSS handles all resizing
+  resize() {}
 
+  // Use live bounding rect so coordinates are accurate regardless of
+  // mobile address-bar state or any CSS change
   screenToGrid(px, py) {
-    const gx = Math.floor(px / this.displayW * GRID_W);
-    const gy = Math.floor(py / this.displayH * GRID_H);
+    const rect = this.canvas.getBoundingClientRect();
+    const gx = Math.floor((px - rect.left) / rect.width  * GRID_W);
+    const gy = Math.floor((py - rect.top)  / rect.height * GRID_H);
     return { gx, gy };
   }
 
@@ -58,8 +54,7 @@ export class Renderer {
   }
 
   render() {
-    this.offCtx.putImageData(this.imageData, 0, 0);
-    this.ctx.drawImage(this.offscreen, 0, 0, this.displayW, this.displayH);
+    this.ctx.putImageData(this.imageData, 0, 0);
   }
 
   _cellColor(mat, life, cvByte) {
