@@ -96,7 +96,7 @@
       transition: background 0.15s;
       white-space: nowrap;
     }
-    #ui-tab:hover { background: rgba(28,28,44,0.92); }
+    #ui-tab:hover  { background: rgba(28,28,44,0.92); }
     #ui-tab:active { background: rgba(40,40,60,0.95); }
 
     #tab-dot {
@@ -106,16 +106,8 @@
       flex-shrink: 0;
       transition: background 0.2s;
     }
-    #tab-name {
-      font-size: 9px;
-      letter-spacing: 0.5px;
-      opacity: 0.8;
-    }
-    #tab-arrow {
-      opacity: 0.6;
-      font-size: 10px;
-      transition: transform 0.22s;
-    }
+    #tab-name  { font-size: 9px; letter-spacing: 0.5px; opacity: 0.8; }
+    #tab-arrow { opacity: 0.6; font-size: 10px; transition: transform 0.22s; }
     #ui-overlay.collapsed #tab-arrow { transform: rotate(180deg); }
     #ui-overlay.collapsed #ui-tab {
       border-bottom: 1px solid rgba(255,255,255,0.13);
@@ -149,7 +141,6 @@
       padding-bottom: 0;
     }
 
-    /* ── Instructions ── */
     #instructions {
       color: rgba(255,255,255,0.38);
       font-size: 10px;
@@ -158,13 +149,12 @@
       white-space: nowrap;
     }
 
-    /* ── Palette grid ── */
     #palette {
       display: flex;
       flex-wrap: wrap;
       gap: 3px;
       justify-content: center;
-      max-width: 580px;
+      max-width: 620px;
     }
 
     .mat-btn {
@@ -199,7 +189,6 @@
       white-space: nowrap;
     }
 
-    /* ── Controls row ── */
     #controls-row {
       display: flex;
       align-items: center;
@@ -214,10 +203,7 @@
       flex-shrink: 0;
     }
 
-    #brush-info {
-      display: flex; flex-direction: column;
-      align-items: center; gap: 2px;
-    }
+    #brush-info { display: flex; flex-direction: column; align-items: center; gap: 2px; }
     #brush-label { color: rgba(255,255,255,0.45); font-size: 9px; }
     #brush-controls { display: flex; align-items: center; gap: 4px; }
 
@@ -294,7 +280,7 @@
   <div id="ui-panel">
     <div id="instructions">
       Click/drag to place · RMB or Z = erase · scroll = brush size · C = clear
-      <span style="opacity:.6"> · Keys: 1–0 QWERTY ASDFGHJ</span>
+      <span style="opacity:.6"> · Keys: 1–0 QWERTYASDFGHJVBNMXKLU</span>
     </div>
     <div id="palette"></div>
     <div id="controls-row">
@@ -314,9 +300,7 @@
       <div class="toolbar-sep"></div>
       <button id="clear-btn">CLEAR</button>
       <div class="toolbar-sep"></div>
-      <a id="bsd-btn" href="https://bsdxr.com" target="_blank" rel="noopener noreferrer">
-        BSD XR ↗
-      </a>
+      <a id="bsd-btn" href="https://bsdxr.com" target="_blank" rel="noopener noreferrer">BSD XR ↗</a>
     </div>
   </div>
 </div>
@@ -332,10 +316,13 @@ const MAT = {
   EMPTY:0, SAND:1, WATER:2, STONE:3, FIRE:4, SMOKE:5,
   OIL:6, LAVA:7, STEAM:8, ICE:9, WOOD:10, ACID:11, PLANT:12, GUNPOWDER:13,
   SNOW:14, SALT:15, MUD:16, TNT:17, GLASS:18, CLONE:19, VOID:20,
-  GEL:21, NITRO:22, CRYO:23
+  GEL:21, NITRO:22, CRYO:23,
+  // New batch
+  VIRUS:24, ANTIBODY:25, CEMENT:26, MERCURY:27,
+  COAL:28, FUNGUS:29, CRYSTAL:30, ELECTRICITY:31
 };
 
-const CAT = { EMPTY:0, POWDER:1, LIQUID:2, GAS:3, SOLID:4 };
+const CAT = { EMPTY:0, POWDER:1, LIQUID:2, GAS:3, SOLID:4, ALIVE:5 };
 
 const MATERIALS = {
   0:  { name:'Empty',    cat:CAT.EMPTY,  density:0,    color:[18,18,24],    flammable:false },
@@ -362,15 +349,25 @@ const MATERIALS = {
   21: { name:'Gel',      cat:CAT.LIQUID, density:0.95, color:[55,195,115],  flammable:false },
   22: { name:'Nitro',    cat:CAT.LIQUID, density:0.85, color:[195,185,255], flammable:true  },
   23: { name:'Cryo',     cat:CAT.LIQUID, density:1.1,  color:[95,195,255],  flammable:false },
+  24: { name:'Virus',    cat:CAT.ALIVE,  density:0,    color:[210,20,20],   flammable:false },
+  25: { name:'Antibody', cat:CAT.ALIVE,  density:0,    color:[20,160,255],  flammable:false },
+  26: { name:'Cement',   cat:CAT.POWDER, density:2.0,  color:[175,175,168], flammable:false },
+  27: { name:'Mercury',  cat:CAT.LIQUID, density:13.5, color:[190,190,205], flammable:false },
+  28: { name:'Coal',     cat:CAT.SOLID,  density:2.9,  color:[28,24,24],    flammable:true  },
+  29: { name:'Fungus',   cat:CAT.SOLID,  density:1.1,  color:[72,28,72],    flammable:true  },
+  30: { name:'Crystal',  cat:CAT.SOLID,  density:2.7,  color:[80,215,230],  flammable:false },
+  31: { name:'Elec.',    cat:CAT.GAS,    density:0.01, color:[255,255,200], flammable:false },
 };
 
 const PALETTE = [
-  MAT.SAND, MAT.WATER, MAT.STONE, MAT.WOOD, MAT.ICE,
-  MAT.SNOW, MAT.SALT,  MAT.MUD,   MAT.PLANT,
-  MAT.FIRE, MAT.SMOKE, MAT.STEAM, MAT.LAVA,
-  MAT.OIL,  MAT.ACID,  MAT.GEL,   MAT.NITRO, MAT.CRYO,
-  MAT.GLASS, MAT.GUNPOWDER, MAT.TNT,
-  MAT.CLONE, MAT.VOID
+  MAT.SAND,  MAT.WATER, MAT.STONE, MAT.WOOD,  MAT.COAL,   MAT.ICE,
+  MAT.SNOW,  MAT.SALT,  MAT.MUD,   MAT.PLANT, MAT.FUNGUS,
+  MAT.FIRE,  MAT.SMOKE, MAT.STEAM, MAT.LAVA,  MAT.ELECTRICITY,
+  MAT.OIL,   MAT.ACID,  MAT.GEL,   MAT.NITRO, MAT.CRYO,   MAT.MERCURY,
+  MAT.GLASS, MAT.CEMENT,MAT.CRYSTAL,
+  MAT.GUNPOWDER, MAT.TNT,
+  MAT.CLONE, MAT.VOID,
+  MAT.VIRUS, MAT.ANTIBODY
 ];
 
 const KEY_BINDINGS = {
@@ -379,7 +376,9 @@ const KEY_BINDINGS = {
   'q':MAT.ACID,  'w':MAT.PLANT,  'e':MAT.GUNPOWDER,
   'r':MAT.SNOW,  't':MAT.SALT,   'y':MAT.MUD,
   'a':MAT.TNT,   's':MAT.GLASS,  'd':MAT.CLONE, 'f':MAT.VOID,
-  'g':MAT.GEL,   'h':MAT.NITRO,  'j':MAT.CRYO
+  'g':MAT.GEL,   'h':MAT.NITRO,  'j':MAT.CRYO,
+  'v':MAT.VIRUS, 'b':MAT.ANTIBODY,'n':MAT.CEMENT,'m':MAT.MERCURY,
+  'x':MAT.COAL,  'k':MAT.FUNGUS, 'l':MAT.CRYSTAL,'u':MAT.ELECTRICITY
 };
 
 function matCat(t)       { return (MATERIALS[t]||MATERIALS[0]).cat; }
@@ -389,8 +388,8 @@ function matFlammable(t) { return (MATERIALS[t]||MATERIALS[0]).flammable; }
 function canDisplace(mover, target) {
   if (target === MAT.EMPTY) return true;
   const mc = matCat(mover), tc = matCat(target);
-  if (tc === CAT.SOLID) return false;
-  if (mc === CAT.GAS)   return false;
+  if (tc === CAT.SOLID || tc === CAT.ALIVE) return false;
+  if (mc === CAT.GAS || mc === CAT.ALIVE) return false;
   if (mc === CAT.POWDER) return tc === CAT.GAS || tc === CAT.LIQUID;
   if (mc === CAT.LIQUID) {
     if (tc === CAT.GAS)    return true;
@@ -423,16 +422,19 @@ class Simulation {
   set(x,y,mat) {
     if (!this.inBounds(x,y)) return;
     const i = this.idx(x,y);
-    this.type[i] = mat;
-    this.life[i] = this._initLife(mat);
-    this.cv[i]   = Math.random()*256|0;
+    this.type[i]    = mat;
+    this.life[i]    = this._initLife(mat);
+    this.cv[i]      = Math.random()*256|0;
     this.updated[i] = 0;
   }
 
   _initLife(mat) {
-    if (mat===MAT.FIRE)  return 80+(Math.random()*70|0);
-    if (mat===MAT.SMOKE) return 60+(Math.random()*40|0);
-    if (mat===MAT.STEAM) return 120+(Math.random()*60|0);
+    if (mat===MAT.FIRE)        return 80+(Math.random()*70|0);
+    if (mat===MAT.SMOKE)       return 60+(Math.random()*40|0);
+    if (mat===MAT.STEAM)       return 120+(Math.random()*60|0);
+    if (mat===MAT.ANTIBODY)    return 380+(Math.random()*80|0);
+    if (mat===MAT.CEMENT)      return 180;
+    if (mat===MAT.ELECTRICITY) return 8+(Math.random()*6|0);
     return 0;
   }
 
@@ -473,6 +475,8 @@ class Simulation {
     if (this.updated[i]) return;
     const mat = this.type[i];
     if (mat === MAT.EMPTY) return;
+    if (mat === MAT.VIRUS)    { this._virus(x,y,i);    return; }
+    if (mat === MAT.ANTIBODY) { this._antibody(x,y,i); return; }
     const cat = matCat(mat);
     if      (cat===CAT.POWDER) this._powder(x,y,mat,i);
     else if (cat===CAT.LIQUID) this._liquid(x,y,mat,i);
@@ -480,18 +484,117 @@ class Simulation {
     else if (cat===CAT.SOLID)  this._solid(x,y,mat,i);
   }
 
+  // ── Living cells ──────────────────────────────────────────────────
+
+  _virus(x,y,i) {
+    const nb4 = [[0,-1],[0,1],[-1,0],[1,0]];
+
+    // Instantly killed by adjacent ANTIBODY
+    for (const [dx,dy] of nb4) {
+      const nx=x+dx, ny=y+dy;
+      if (!this.inBounds(nx,ny)) continue;
+      if (this.type[this.idx(nx,ny)] === MAT.ANTIBODY) {
+        this.type[i]=MAT.EMPTY; this.updated[i]=1; return;
+      }
+    }
+
+    // Spread to adjacent empty / organic cells
+    if (Math.random() < 0.022) {
+      const [dx,dy] = nb4[Math.random()*4|0];
+      const nx=x+dx, ny=y+dy;
+      if (this.inBounds(nx,ny)) {
+        const ni=this.idx(nx,ny), n=this.type[ni];
+        const infectable = n===MAT.EMPTY||n===MAT.WATER||n===MAT.MUD||
+                           n===MAT.PLANT||n===MAT.FUNGUS;
+        if (infectable && !this.updated[ni]) {
+          this.type[ni]=MAT.VIRUS; this.cv[ni]=Math.random()*256|0;
+          this.updated[ni]=1;
+        }
+      }
+    }
+    this.updated[i]=1;
+  }
+
+  _antibody(x,y,i) {
+    const nb4 = [[0,-1],[0,1],[-1,0],[1,0]];
+
+    // Eat adjacent VIRUS
+    for (const [dx,dy] of nb4) {
+      const nx=x+dx, ny=y+dy;
+      if (!this.inBounds(nx,ny)) continue;
+      const ni=this.idx(nx,ny);
+      if (this.type[ni] === MAT.VIRUS) {
+        this.type[ni]=MAT.EMPTY; this.updated[ni]=1;
+        this.life[i]=400; // reset starvation timer
+        // 38% chance to reproduce into a nearby empty cell
+        if (Math.random() < 0.38) {
+          for (const [dx2,dy2] of nb4) {
+            const nx2=x+dx2, ny2=y+dy2;
+            if (!this.inBounds(nx2,ny2)) continue;
+            const ni2=this.idx(nx2,ny2);
+            if (this.type[ni2]===MAT.EMPTY && !this.updated[ni2]) {
+              this.type[ni2]=MAT.ANTIBODY;
+              this.life[ni2]=400; this.cv[ni2]=Math.random()*256|0;
+              this.updated[ni2]=1; break;
+            }
+          }
+        }
+        this.updated[i]=1; return;
+      }
+    }
+
+    // Starvation countdown
+    if (this.life[i] > 0) {
+      this.life[i]--;
+      if (this.life[i] === 0) {
+        this.type[i]=MAT.EMPTY; this.updated[i]=1; return;
+      }
+    }
+
+    // Scan for nearest VIRUS (radius 8)
+    let targetX=-1, targetY=-1, bestD=9999;
+    for (let ry=-8; ry<=8; ry++) {
+      for (let rx=-8; rx<=8; rx++) {
+        if (rx===0&&ry===0) continue;
+        const nx=x+rx, ny=y+ry;
+        if (!this.inBounds(nx,ny)) continue;
+        if (this.type[this.idx(nx,ny)] === MAT.VIRUS) {
+          const d=Math.abs(rx)+Math.abs(ry);
+          if (d < bestD) { bestD=d; targetX=nx; targetY=ny; }
+        }
+      }
+    }
+
+    if (targetX >= 0) {
+      // Move toward VIRUS
+      const mx=Math.sign(targetX-x), my=Math.sign(targetY-y);
+      if      (!this.tryMove(x,y,x+mx,y+my))
+        if    (!this.tryMove(x,y,x+mx,y))
+               this.tryMove(x,y,x,y+my);
+    } else {
+      // Slow random walk while idle
+      if (Math.random() < 0.25) {
+        const [rdx,rdy] = nb4[Math.random()*4|0];
+        this.tryMove(x,y,x+rdx,y+rdy);
+      }
+    }
+    this.updated[i]=1;
+  }
+
+  // ── Powder ────────────────────────────────────────────────────────
+
   _powder(x,y,mat,i) {
     const nb4 = [[0,-1],[0,1],[-1,0],[1,0]];
 
     if (mat===MAT.GUNPOWDER) {
       for (const [dx,dy] of nb4) {
-        const n = this.get(x+dx,y+dy);
+        const n=this.get(x+dx,y+dy);
         if (n===MAT.FIRE||n===MAT.LAVA) { this._explode(x,y); return; }
       }
     }
     if (mat===MAT.SNOW) {
       for (const [dx,dy] of nb4) {
-        const n = this.get(x+dx,y+dy);
+        const n=this.get(x+dx,y+dy);
         if (n===MAT.FIRE||n===MAT.LAVA) {
           this.type[i]=MAT.WATER; this.life[i]=0; this.cv[i]=Math.random()*256|0;
           this.updated[i]=1; return;
@@ -500,7 +603,7 @@ class Simulation {
     }
     if (mat===MAT.SALT) {
       for (const [dx,dy] of nb4) {
-        const nx=x+dx,ny=y+dy;
+        const nx=x+dx, ny=y+dy;
         if (!this.inBounds(nx,ny)) continue;
         const ni=this.idx(nx,ny), n=this.type[ni];
         if (n===MAT.WATER && Math.random()<0.012) {
@@ -510,7 +613,7 @@ class Simulation {
     }
     if (mat===MAT.SAND) {
       for (const [dx,dy] of nb4) {
-        const nx=x+dx,ny=y+dy;
+        const nx=x+dx, ny=y+dy;
         if (!this.inBounds(nx,ny)) continue;
         if (this.type[this.idx(nx,ny)]===MAT.WATER && Math.random()<0.008) {
           this.type[i]=MAT.MUD; this.cv[i]=Math.random()*256|0;
@@ -519,8 +622,20 @@ class Simulation {
       }
     }
 
-    if (this.type[i]!==mat) return;
+    // Cement: hardens into stone over time
+    if (mat===MAT.CEMENT) {
+      if (this.life[i] > 0) {
+        this.life[i]--;
+        if (this.life[i] === 0) {
+          this.type[i]=MAT.STONE; this.cv[i]=Math.random()*256|0;
+          this.updated[i]=1; return;
+        }
+      }
+      // Nearly set cement barely moves
+      if (this.life[i] < 90 && Math.random() < 0.7) { this.updated[i]=1; return; }
+    }
 
+    if (this.type[i]!==mat) return;
     if (mat===MAT.MUD && Math.random()<0.55) { this.updated[i]=1; return; }
 
     if (this.tryMove(x,y,x,y+1)) return;
@@ -529,6 +644,8 @@ class Simulation {
     if (this.tryMove(x,y,b,y+1)) return;
     this.updated[i]=1;
   }
+
+  // ── Liquid ────────────────────────────────────────────────────────
 
   _liquid(x,y,mat,i) {
     this._liquidInteract(x,y,mat,i);
@@ -540,9 +657,9 @@ class Simulation {
     if (mat===MAT.GEL && Math.random()<0.62) { this.updated[i]=1; return; }
 
     if (this.tryMove(x,y,x,y+1)) return;
-    const dir = this._ltr?1:-1;
-    const maxSpread = mat===MAT.GEL ? 1 : 5;
-    let moved = false;
+    const dir=this._ltr?1:-1;
+    const maxSpread = mat===MAT.GEL?1:5;
+    let moved=false;
     for (let d=1; d<=maxSpread; d++) {
       if (this.tryMove(x,y,x+dir*d,y)) { moved=true; break; }
       if (!this.inBounds(x+dir*d,y)||this.type[this.idx(x+dir*d,y)]!==MAT.EMPTY) break;
@@ -561,12 +678,12 @@ class Simulation {
 
     if (mat===MAT.LAVA) {
       for (const [dx,dy] of nb) {
-        const nx=x+dx,ny=y+dy;
+        const nx=x+dx, ny=y+dy;
         if (!this.inBounds(nx,ny)) continue;
         const ni=this.idx(nx,ny), n=this.type[ni];
         if (n===MAT.WATER||n===MAT.CRYO) {
           this.type[i]=MAT.STONE; this.cv[i]=Math.random()*256|0;
-          this.type[ni]= n===MAT.CRYO ? MAT.WATER : MAT.STEAM;
+          this.type[ni]=n===MAT.CRYO?MAT.WATER:MAT.STEAM;
           this.life[ni]=this._initLife(this.type[ni]); this.cv[ni]=Math.random()*256|0;
           this.updated[i]=this.updated[ni]=1; return;
         }
@@ -584,12 +701,13 @@ class Simulation {
 
     if (mat===MAT.ACID) {
       for (const [dx,dy] of nb) {
-        const nx=x+dx,ny=y+dy;
+        const nx=x+dx, ny=y+dy;
         if (!this.inBounds(nx,ny)) continue;
         const ni=this.idx(nx,ny), n=this.type[ni];
         if (n===MAT.TNT&&Math.random()<0.01) { this._explodeBig(nx,ny); return; }
-        const dissolvable = n===MAT.STONE||n===MAT.SAND||n===MAT.WOOD||
-                            n===MAT.PLANT||n===MAT.MUD||n===MAT.SNOW||n===MAT.SALT;
+        const dissolvable = n===MAT.STONE||n===MAT.SAND||n===MAT.WOOD||n===MAT.PLANT||
+                            n===MAT.MUD||n===MAT.SNOW||n===MAT.SALT||n===MAT.COAL||
+                            n===MAT.FUNGUS||n===MAT.CEMENT;
         if (dissolvable&&Math.random()<0.015) {
           this.type[ni]=MAT.EMPTY; this.updated[ni]=1;
           if (Math.random()<0.3) { this.type[i]=MAT.EMPTY; this.updated[i]=1; return; }
@@ -599,7 +717,7 @@ class Simulation {
 
     if (mat===MAT.WATER) {
       for (const [dx,dy] of nb) {
-        const nx=x+dx,ny=y+dy;
+        const nx=x+dx, ny=y+dy;
         if (!this.inBounds(nx,ny)) continue;
         const ni=this.idx(nx,ny), n=this.type[ni];
         if (n===MAT.FIRE) {
@@ -613,7 +731,7 @@ class Simulation {
 
     if (mat===MAT.CRYO) {
       for (const [dx,dy] of nb) {
-        const nx=x+dx,ny=y+dy;
+        const nx=x+dx, ny=y+dy;
         if (!this.inBounds(nx,ny)) continue;
         const ni=this.idx(nx,ny), n=this.type[ni];
         if (n===MAT.WATER&&Math.random()<0.04) {
@@ -632,15 +750,67 @@ class Simulation {
 
     if (mat===MAT.NITRO) {
       for (const [dx,dy] of nb) {
-        const nx=x+dx,ny=y+dy;
+        const nx=x+dx, ny=y+dy;
         if (!this.inBounds(nx,ny)) continue;
         const n=this.type[this.idx(nx,ny)];
         if (n===MAT.FIRE||n===MAT.LAVA) { this._explode(x,y); return; }
       }
     }
+
+    if (mat===MAT.MERCURY) {
+      for (const [dx,dy] of nb) {
+        const nx=x+dx, ny=y+dy;
+        if (!this.inBounds(nx,ny)) continue;
+        const ni=this.idx(nx,ny), n=this.type[ni];
+        // Toxic: slowly poisons organic/liquid neighbors
+        const poisonable = n===MAT.WATER||n===MAT.OIL||n===MAT.GEL||n===MAT.PLANT||
+                           n===MAT.WOOD||n===MAT.MUD||n===MAT.SAND||n===MAT.FUNGUS||
+                           n===MAT.VIRUS||n===MAT.ANTIBODY;
+        if (poisonable&&Math.random()<0.003) {
+          this.type[ni]=MAT.EMPTY; this.updated[ni]=1;
+        }
+      }
+    }
   }
 
+  // ── Gas ───────────────────────────────────────────────────────────
+
   _gas(x,y,mat,i) {
+    // Electricity: special fast arc behavior
+    if (mat===MAT.ELECTRICITY) {
+      if (this.life[i] > 0) {
+        this.life[i]--;
+        if (this.life[i] === 0) { this.type[i]=MAT.EMPTY; this.updated[i]=1; return; }
+      }
+      // Arc to water and cryo
+      for (const [dx,dy] of [[0,-1],[0,1],[-1,0],[1,0]]) {
+        const nx=x+dx, ny=y+dy;
+        if (!this.inBounds(nx,ny)) continue;
+        const ni=this.idx(nx,ny), n=this.type[ni];
+        if ((n===MAT.WATER||n===MAT.CRYO) && Math.random()<0.45 && !this.updated[ni]) {
+          this.type[ni]=MAT.ELECTRICITY; this.life[ni]=Math.max(1,this.life[i]-1);
+          this.cv[ni]=Math.random()*256|0; this.updated[ni]=1;
+        }
+        if (matFlammable(n) && !this.updated[ni]) {
+          this.type[ni]=MAT.FIRE; this.life[ni]=this._initLife(MAT.FIRE);
+          this.cv[ni]=Math.random()*256|0; this.updated[ni]=1;
+        }
+        // Zap virus and antibody
+        if ((n===MAT.VIRUS||n===MAT.ANTIBODY) && !this.updated[ni]) {
+          this.type[ni]=MAT.EMPTY; this.updated[ni]=1;
+        }
+      }
+      if (this.type[i]!==MAT.ELECTRICITY) return;
+      // Move in any direction (arcing)
+      const ad=[[0,-1],[0,1],[-1,0],[1,0],[1,-1],[-1,-1],[1,1],[-1,1]];
+      const [d1x,d1y]=ad[Math.random()*8|0];
+      if (!this.tryMove(x,y,x+d1x,y+d1y)) {
+        const [d2x,d2y]=ad[Math.random()*8|0];
+        this.tryMove(x,y,x+d2x,y+d2y);
+      }
+      this.updated[i]=1; return;
+    }
+
     if (this.life[i]>0) {
       this.life[i]--;
       if (this.life[i]===0) {
@@ -650,13 +820,16 @@ class Simulation {
         this.updated[i]=1; return;
       }
     }
+
     if (mat===MAT.FIRE) {
       for (const [dx,dy] of [[0,-1],[0,1],[-1,0],[1,0],[1,1],[-1,1],[1,-1],[-1,-1]]) {
-        const nx=x+dx,ny=y+dy;
+        const nx=x+dx, ny=y+dy;
         if (!this.inBounds(nx,ny)) continue;
         const ni=this.idx(nx,ny), n=this.type[ni];
         if (matFlammable(n)&&Math.random()<0.025) {
-          this.type[ni]=MAT.FIRE; this.life[ni]=this._initLife(MAT.FIRE);
+          // Coal burns much longer than other materials
+          const burnLife = n===MAT.COAL ? 500+(Math.random()*200|0) : this._initLife(MAT.FIRE);
+          this.type[ni]=MAT.FIRE; this.life[ni]=burnLife;
           this.cv[ni]=Math.random()*256|0; this.updated[ni]=1;
         }
         if (n===MAT.SNOW&&Math.random()<0.06) {
@@ -673,17 +846,24 @@ class Simulation {
         if (n===MAT.GUNPOWDER) { this._explode(nx,ny); return; }
         if (n===MAT.TNT)       { this._explodeBig(nx,ny); return; }
         if (n===MAT.NITRO)     { this._explode(nx,ny); return; }
+        // Fire kills virus
+        if ((n===MAT.VIRUS||n===MAT.ANTIBODY) && !this.updated[ni]) {
+          this.type[ni]=MAT.EMPTY; this.updated[ni]=1;
+        }
       }
     }
+
     if (this.type[i]!==mat) return;
     if (this.tryMove(x,y,x,y-1)) return;
-    const d = Math.random()<0.5?1:-1;
+    const d=Math.random()<0.5?1:-1;
     if (this.tryMove(x,y,x+d,y-1)) return;
     if (this.tryMove(x,y,x-d,y-1)) return;
     if (this.tryMove(x,y,x+d,y))   return;
     if (this.tryMove(x,y,x-d,y))   return;
     this.updated[i]=1;
   }
+
+  // ── Solid ─────────────────────────────────────────────────────────
 
   _solid(x,y,mat,i) {
     if (mat===MAT.ICE) {
@@ -699,7 +879,7 @@ class Simulation {
     if (mat===MAT.PLANT&&Math.random()<0.003) {
       const dirs=[[0,-1],[0,1],[-1,0],[1,0]].sort(()=>Math.random()-0.5);
       for (const [dx,dy] of dirs) {
-        const nx=x+dx,ny=y+dy;
+        const nx=x+dx, ny=y+dy;
         if (!this.inBounds(nx,ny)) continue;
         const ni=this.idx(nx,ny);
         if (this.type[ni]===MAT.WATER) {
@@ -718,7 +898,7 @@ class Simulation {
 
     if (mat===MAT.VOID) {
       for (const [dx,dy] of [[0,-1],[0,1],[-1,0],[1,0],[-1,-1],[1,-1],[-1,1],[1,1]]) {
-        const nx=x+dx,ny=y+dy;
+        const nx=x+dx, ny=y+dy;
         if (!this.inBounds(nx,ny)) continue;
         const ni=this.idx(nx,ny), n=this.type[ni];
         if (n!==MAT.EMPTY&&n!==MAT.VOID&&n!==MAT.STONE) {
@@ -731,7 +911,7 @@ class Simulation {
       const dirs=[[0,-1],[0,1],[-1,0],[1,0]];
       const candidates=[];
       for (const [dx,dy] of dirs) {
-        const nx=x+dx,ny=y+dy;
+        const nx=x+dx, ny=y+dy;
         if (!this.inBounds(nx,ny)) continue;
         const n=this.type[this.idx(nx,ny)];
         if (n!==MAT.EMPTY&&n!==MAT.CLONE&&n!==MAT.VOID) candidates.push(n);
@@ -739,7 +919,7 @@ class Simulation {
       if (candidates.length>0) {
         const copyMat=candidates[Math.random()*candidates.length|0];
         for (const [dx,dy] of dirs) {
-          const nx=x+dx,ny=y+dy;
+          const nx=x+dx, ny=y+dy;
           if (!this.inBounds(nx,ny)) continue;
           const ni=this.idx(nx,ny);
           if (this.type[ni]===MAT.EMPTY) {
@@ -750,19 +930,50 @@ class Simulation {
       }
     }
 
+    // Fungus spreads to organic materials
+    if (mat===MAT.FUNGUS&&Math.random()<0.0018) {
+      const dirs=[[0,-1],[0,1],[-1,0],[1,0]].sort(()=>Math.random()-0.5);
+      for (const [dx,dy] of dirs) {
+        const nx=x+dx, ny=y+dy;
+        if (!this.inBounds(nx,ny)) continue;
+        const ni=this.idx(nx,ny), n=this.type[ni];
+        if (n===MAT.PLANT||n===MAT.WOOD||n===MAT.SAND||n===MAT.MUD||n===MAT.COAL) {
+          this.type[ni]=MAT.FUNGUS; this.cv[ni]=Math.random()*256|0;
+          this.updated[ni]=1; return;
+        }
+      }
+    }
+
+    // Crystal grows on mineral surfaces
+    if (mat===MAT.CRYSTAL&&Math.random()<0.003) {
+      const dirs=[[0,-1],[0,1],[-1,0],[1,0],[-1,-1],[1,-1],[-1,1],[1,1]].sort(()=>Math.random()-0.5);
+      for (const [dx,dy] of dirs) {
+        const nx=x+dx, ny=y+dy;
+        if (!this.inBounds(nx,ny)) continue;
+        const ni=this.idx(nx,ny), n=this.type[ni];
+        if (n===MAT.STONE||n===MAT.SAND||n===MAT.GLASS||n===MAT.ICE||
+            n===MAT.SALT||n===MAT.CEMENT) {
+          this.type[ni]=MAT.CRYSTAL; this.cv[ni]=Math.random()*256|0;
+          this.updated[ni]=1; return;
+        }
+      }
+    }
+
     this.updated[i]=1;
   }
+
+  // ── Explosions ────────────────────────────────────────────────────
 
   _explode(cx,cy) {
     const R=12, R2=R*R, I2=36;
     for (let dy=-R; dy<=R; dy++) {
       for (let dx=-R; dx<=R; dx++) {
-        const nx=cx+dx,ny=cy+dy;
+        const nx=cx+dx, ny=cy+dy;
         if (!this.inBounds(nx,ny)) continue;
         const ni=this.idx(nx,ny), d2=dx*dx+dy*dy;
         if (d2>R2) continue;
         const t=this.type[ni];
-        if (t===MAT.STONE) continue;
+        if (t===MAT.STONE||t===MAT.CRYSTAL) continue;
         if (d2<=I2) { this.type[ni]=MAT.EMPTY; }
         else if (t===MAT.EMPTY||t===MAT.GUNPOWDER||matFlammable(t)) {
           this.type[ni]=MAT.FIRE; this.life[ni]=this._initLife(MAT.FIRE);
@@ -777,12 +988,12 @@ class Simulation {
     const R=22, R2=R*R, I2=81;
     for (let dy=-R; dy<=R; dy++) {
       for (let dx=-R; dx<=R; dx++) {
-        const nx=cx+dx,ny=cy+dy;
+        const nx=cx+dx, ny=cy+dy;
         if (!this.inBounds(nx,ny)) continue;
         const ni=this.idx(nx,ny), d2=dx*dx+dy*dy;
         if (d2>R2) continue;
         const t=this.type[ni];
-        if (t===MAT.STONE) continue;
+        if (t===MAT.STONE||t===MAT.CRYSTAL) continue;
         if (d2<=I2) { this.type[ni]=MAT.EMPTY; }
         else if (t===MAT.EMPTY||t===MAT.TNT||t===MAT.GUNPOWDER||matFlammable(t)) {
           this.type[ni]=MAT.FIRE; this.life[ni]=this._initLife(MAT.FIRE);
@@ -863,6 +1074,45 @@ function cellColor(mat, life, cv) {
     case MAT.GEL:     { const v=(vari*.5)|0; return [clamp(40+v,0,255),clamp(195+v,0,255),clamp(105+v,0,255)]; }
     case MAT.NITRO:   { const v=(vari*.35)|0; return [clamp(195+v,0,255),clamp(182+v,0,255),255]; }
     case MAT.CRYO:    { const v=(vari*.4)|0; return [clamp(80+v,0,255),clamp(192+v,0,255),255]; }
+    // New materials
+    case MAT.VIRUS: {
+      const p=Math.sin(cv*.11)*30;
+      return [clamp(210+(p|0),0,255),clamp(12+(p*.1|0),0,255),clamp(12+(p*.1|0),0,255)];
+    }
+    case MAT.ANTIBODY: {
+      // Brightness fades with starvation (life 0-400)
+      const t=Math.min(life/400,1);
+      const p=Math.sin(cv*.08)*25;
+      return [clamp(10,0,255),clamp(90+Math.round(70*t)+(p|0),0,255),255];
+    }
+    case MAT.CEMENT: {
+      // Light grey when wet, darkens as it sets
+      const t=life/180;
+      const base=clamp(Math.round(105+75*t+vari),0,255);
+      return [base,base,clamp(base-6,0,255)];
+    }
+    case MAT.MERCURY: {
+      const p=Math.sin(cv*.04)*28;
+      const b=clamp(185+(p|0),0,255);
+      return [b,b,clamp(b+14,0,255)];
+    }
+    case MAT.COAL: {
+      const v=(vari*.2)|0;
+      return [clamp(26+v,0,255),clamp(22+v,0,255),clamp(22+v,0,255)];
+    }
+    case MAT.FUNGUS: {
+      const v=(vari*.45)|0;
+      return [clamp(72+v,0,255),clamp(28+v,0,255),clamp(72+v,0,255)];
+    }
+    case MAT.CRYSTAL: {
+      const p=Math.sin(cv*.06)*40;
+      return [clamp(75+(p|0),0,255),clamp(208+(p|0),0,255),clamp(228+(p|0),0,255)];
+    }
+    case MAT.ELECTRICITY: {
+      const t=Math.min(life/10,1);
+      const b=clamp(Math.round(255*t+80*(1-t)),0,255);
+      return [b,b,clamp(Math.round(180*t),0,255)];
+    }
     default: return [255,0,255];
   }
 }
@@ -906,16 +1156,15 @@ class UI {
     this._pick(MAT.SAND);
 
     document.getElementById('brush-up').addEventListener('click', () => {
-      this.brushSize = Math.min(50, this.brushSize+1); this._updateBrush();
+      this.brushSize=Math.min(50,this.brushSize+1); this._updateBrush();
     });
     document.getElementById('brush-down').addEventListener('click', () => {
-      this.brushSize = Math.max(1, this.brushSize-1); this._updateBrush();
+      this.brushSize=Math.max(1,this.brushSize-1); this._updateBrush();
     });
 
     document.getElementById('clear-btn').addEventListener('click', onClear);
-
     document.getElementById('mode-indicator').addEventListener('click', () => {
-      this.eraseMode = !this.eraseMode; this._updateMode();
+      this.eraseMode=!this.eraseMode; this._updateMode();
     });
 
     window.addEventListener('keydown', e => {
@@ -924,36 +1173,33 @@ class UI {
       if (KEY_BINDINGS[k]!==undefined) { this._pick(KEY_BINDINGS[k]); return; }
       if (k==='[')  { this.brushSize=Math.max(1,  this.brushSize-1); this._updateBrush(); }
       if (k===']')  { this.brushSize=Math.min(50, this.brushSize+1); this._updateBrush(); }
-      if (k==='c')  { onClear(); }
+      if (k==='c')  onClear();
       if (k==='z')  { this.eraseMode=!this.eraseMode; this._updateMode(); }
     });
 
     window.addEventListener('wheel', e => {
       e.preventDefault();
-      this.brushSize = Math.min(50, Math.max(1, this.brushSize+(e.deltaY>0?-1:1)));
+      this.brushSize=Math.min(50,Math.max(1,this.brushSize+(e.deltaY>0?-1:1)));
       this._updateBrush();
     }, { passive: false });
   }
 
   _pick(id) {
-    this._selected = id;
+    this._selected=id;
     this._onMat(id);
-    for (const [i, btn] of this._btns) btn.classList.toggle('active', i===id);
-    const m = MATERIALS[id];
-    const [r,g,b] = m.color;
-    const dot = document.getElementById('tab-dot');
-    if (dot) dot.style.background = `rgb(${r},${g},${b})`;
-    const name = document.getElementById('tab-name');
-    if (name) name.textContent = m.name.toUpperCase();
+    for (const [i,btn] of this._btns) btn.classList.toggle('active',i===id);
+    const m=MATERIALS[id];
+    const [r,g,b]=m.color;
+    const dot=document.getElementById('tab-dot');
+    if (dot) dot.style.background=`rgb(${r},${g},${b})`;
+    const name=document.getElementById('tab-name');
+    if (name) name.textContent=m.name.toUpperCase();
   }
 
-  _updateBrush() {
-    document.getElementById('brush-size-display').textContent = this.brushSize;
-  }
-
+  _updateBrush() { document.getElementById('brush-size-display').textContent=this.brushSize; }
   _updateMode() {
-    document.getElementById('mode-dot').classList.toggle('erase', this.eraseMode);
-    document.getElementById('mode-text').textContent = this.eraseMode ? 'ERASE' : 'DRAW';
+    document.getElementById('mode-dot').classList.toggle('erase',this.eraseMode);
+    document.getElementById('mode-text').textContent=this.eraseMode?'ERASE':'DRAW';
   }
 
   get selectedMat() { return this._selected; }
@@ -972,94 +1218,90 @@ let eraseMode   = false;
 let brushSize   = 2;
 
 const ui = new UI(
-  mat => { selectedMat = mat; },
+  mat => { selectedMat=mat; },
   ()  => sim.clear()
 );
 
-Object.defineProperty(ui, 'brushSize', { get(){ return brushSize; }, set(v){ brushSize=v; } });
-Object.defineProperty(ui, 'eraseMode', { get(){ return eraseMode; }, set(v){ eraseMode=v; } });
+Object.defineProperty(ui,'brushSize',{ get(){return brushSize;}, set(v){brushSize=v;} });
+Object.defineProperty(ui,'eraseMode',{ get(){return eraseMode;}, set(v){eraseMode=v;} });
 
 // Collapse toggle
-let uiCollapsed = false;
-document.getElementById('ui-tab').addEventListener('click', () => {
-  uiCollapsed = !uiCollapsed;
-  document.getElementById('ui-overlay').classList.toggle('collapsed', uiCollapsed);
+let uiCollapsed=false;
+document.getElementById('ui-tab').addEventListener('click',()=>{
+  uiCollapsed=!uiCollapsed;
+  document.getElementById('ui-overlay').classList.toggle('collapsed',uiCollapsed);
 });
 
 // Input
 let lastGX=-1, lastGY=-1;
 
 function paintAt(sx,sy,erase) {
-  const { gx,gy } = renderer.screenToGrid(sx,sy);
-  if (gx===lastGX && gy===lastGY) return;
+  const {gx,gy}=renderer.screenToGrid(sx,sy);
+  if (gx===lastGX&&gy===lastGY) return;
   lastGX=gx; lastGY=gy;
-  sim.paint(gx, gy, brushSize, erase?MAT.EMPTY:selectedMat);
+  sim.paint(gx,gy,brushSize,erase?MAT.EMPTY:selectedMat);
 }
 
 function paintLine(x0,y0,x1,y1,erase) {
-  let dx=Math.abs(x1-x0), dy=Math.abs(y1-y0);
-  let sx=x0<x1?1:-1, sy=y0<y1?1:-1, err=dx-dy;
-  const mat = erase?MAT.EMPTY:selectedMat;
-  while (true) {
+  let dx=Math.abs(x1-x0),dy=Math.abs(y1-y0);
+  let sx=x0<x1?1:-1,sy=y0<y1?1:-1,err=dx-dy;
+  const mat=erase?MAT.EMPTY:selectedMat;
+  while(true){
     sim.paint(x0,y0,brushSize,mat);
-    if (x0===x1&&y0===y1) break;
+    if(x0===x1&&y0===y1) break;
     const e2=2*err;
-    if (e2>-dy){ err-=dy; x0+=sx; }
-    if (e2< dx){ err+=dx; y0+=sy; }
+    if(e2>-dy){err-=dy;x0+=sx;}
+    if(e2< dx){err+=dx;y0+=sy;}
   }
 }
 
 let isDown=false, isRight=false;
 
-canvas.addEventListener('mousedown', e => {
+canvas.addEventListener('mousedown',e=>{
   e.preventDefault();
-  if (e.button===0) isDown  = true;
-  if (e.button===2) isRight = true;
+  if(e.button===0)isDown=true;
+  if(e.button===2)isRight=true;
   lastGX=lastGY=-1;
-  paintAt(e.clientX, e.clientY, e.button===2||eraseMode);
+  paintAt(e.clientX,e.clientY,e.button===2||eraseMode);
 });
-
-canvas.addEventListener('mousemove', e => {
-  if (!isDown&&!isRight) return;
-  const erase = isRight||(isDown&&eraseMode);
-  const { gx,gy } = renderer.screenToGrid(e.clientX, e.clientY);
-  if (lastGX>=0) paintLine(lastGX,lastGY,gx,gy,erase);
+canvas.addEventListener('mousemove',e=>{
+  if(!isDown&&!isRight)return;
+  const erase=isRight||(isDown&&eraseMode);
+  const {gx,gy}=renderer.screenToGrid(e.clientX,e.clientY);
+  if(lastGX>=0)paintLine(lastGX,lastGY,gx,gy,erase);
   else sim.paint(gx,gy,brushSize,erase?MAT.EMPTY:selectedMat);
   lastGX=gx; lastGY=gy;
 });
-
-canvas.addEventListener('mouseup',    e => { if(e.button===0)isDown=false; if(e.button===2)isRight=false; });
-canvas.addEventListener('mouseleave', ()=> { isDown=false; isRight=false; });
-canvas.addEventListener('contextmenu',e => e.preventDefault());
+canvas.addEventListener('mouseup',   e=>{if(e.button===0)isDown=false;if(e.button===2)isRight=false;});
+canvas.addEventListener('mouseleave',()=>{isDown=false;isRight=false;});
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
 
 let ltx=-1, lty=-1;
 
-canvas.addEventListener('touchstart', e => {
+canvas.addEventListener('touchstart',e=>{
   e.preventDefault();
   const t=e.touches[0];
-  const { gx,gy } = renderer.screenToGrid(t.clientX, t.clientY);
+  const {gx,gy}=renderer.screenToGrid(t.clientX,t.clientY);
   ltx=gx; lty=gy;
-  paintAt(t.clientX, t.clientY, eraseMode);
-}, { passive: false });
-
-canvas.addEventListener('touchmove', e => {
+  paintAt(t.clientX,t.clientY,eraseMode);
+},{passive:false});
+canvas.addEventListener('touchmove',e=>{
   e.preventDefault();
   const t=e.touches[0];
-  const { gx,gy } = renderer.screenToGrid(t.clientX, t.clientY);
-  if (ltx>=0) paintLine(ltx,lty,gx,gy,eraseMode);
+  const {gx,gy}=renderer.screenToGrid(t.clientX,t.clientY);
+  if(ltx>=0)paintLine(ltx,lty,gx,gy,eraseMode);
   ltx=gx; lty=gy;
-}, { passive: false });
-
-canvas.addEventListener('touchend', () => { ltx=lty=-1; });
+},{passive:false});
+canvas.addEventListener('touchend',()=>{ltx=lty=-1;});
 
 // Game loop
-const FRAME_MS = 1000/60;
-let lastTime = 0;
+const FRAME_MS=1000/60;
+let lastTime=0;
 
-function loop(ts) {
+function loop(ts){
   requestAnimationFrame(loop);
-  if (ts-lastTime < FRAME_MS-1) return;
-  lastTime = ts;
+  if(ts-lastTime<FRAME_MS-1)return;
+  lastTime=ts;
   sim.step();
   renderer.draw(sim);
 }
