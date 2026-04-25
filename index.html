@@ -4,16 +4,62 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23121218'/><rect x='8' y='18' width='5' height='5' fill='%23c2a050'/><rect x='14' y='16' width='5' height='5' fill='%232876c8'/><rect x='20' y='14' width='5' height='5' fill='%23f04040'/></svg>" />
-  <title>Pixel Physics Sandbox</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <title>Pixel Physics Sandbox — BSD XR</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       background: #121218;
       overflow: hidden;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Space Mono', monospace;
       user-select: none;
       -webkit-user-select: none;
+    }
+
+    /* ── BSD XR logo ── */
+    #bsd-logo {
+      position: fixed;
+      top: 18px;
+      left: 20px;
+      width: 130px;
+      height: auto;
+      opacity: 0.72;
+      pointer-events: none;
+      z-index: 50;
+      display: block;
+    }
+    @media (max-width: 600px) {
+      #bsd-logo { width: 90px; top: 12px; left: 12px; opacity: 0.65; }
+    }
+
+    /* ── BSD XR site link button ── */
+    #bsd-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid rgba(229,229,229,0.5);
+      color: rgba(229,229,229,0.72);
+      background: transparent;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      border-radius: 0;
+      text-decoration: none;
+      padding: 5px 9px;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      touch-action: manipulation;
+      line-height: 1;
+    }
+    #bsd-btn:hover {
+      background: rgba(229,229,229,0.92);
+      color: #0a0a0a;
+      border-color: rgba(229,229,229,0.92);
     }
 
     /* ── UI overlay ── */
@@ -236,6 +282,8 @@
 </head>
 <body>
 
+<img id="bsd-logo" src="branding/logo-dark.png" alt="BSD XR" />
+
 <div id="ui-overlay">
   <div id="ui-tab">
     <div id="tab-dot"></div>
@@ -265,6 +313,10 @@
       </div>
       <div class="toolbar-sep"></div>
       <button id="clear-btn">CLEAR</button>
+      <div class="toolbar-sep"></div>
+      <a id="bsd-btn" href="https://bsdxr.com" target="_blank" rel="noopener noreferrer">
+        BSD XR ↗
+      </a>
     </div>
   </div>
 </div>
