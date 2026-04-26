@@ -254,6 +254,43 @@
     #mode-dot { width: 8px; height: 8px; border-radius: 50%; background: #4af; }
     #mode-dot.erase { background: #f44; }
 
+    /* ── Tool buttons ── */
+    #tools-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .tools-label {
+      color: rgba(255,255,255,0.35);
+      font-size: 9px;
+      letter-spacing: 0.5px;
+      margin-right: 2px;
+      white-space: nowrap;
+    }
+    .tool-btn {
+      border: 1px solid rgba(229,229,229,0.28);
+      border-radius: 0;
+      background: rgba(255,255,255,0.04);
+      color: rgba(229,229,229,0.58);
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      padding: 5px 9px;
+      text-transform: uppercase;
+      transition: background 0.13s, color 0.13s, border-color 0.13s;
+      touch-action: manipulation;
+      white-space: nowrap;
+      line-height: 1;
+    }
+    .tool-btn:hover { background: rgba(255,255,255,0.1); color: rgba(229,229,229,0.9); border-color: rgba(229,229,229,0.55); }
+    .tool-btn[data-tool="laser"].active  { border-color: #f76; color: #f98; background: rgba(255,90,40,0.16); }
+    .tool-btn[data-tool="wind"].active   { border-color: #8cf; color: #adf; background: rgba(80,170,255,0.13); }
+    .tool-btn[data-tool="freeze"].active { border-color: #7ef; color: #aff; background: rgba(80,220,255,0.13); }
+    .tool-btn[data-tool="bomb"].active   { border-color: #fa6; color: #fc9; background: rgba(255,155,50,0.16); }
+
     @media (max-width: 600px) {
       #ui-overlay { width: 100%; }
       #ui-panel { border-radius: 0; }
@@ -283,6 +320,13 @@
       <span style="opacity:.6"> · Keys: 1–0 QWERTYASDFGHJVBNMXKLU</span>
     </div>
     <div id="palette"></div>
+    <div id="tools-row">
+      <span class="tools-label">TOOLS</span>
+      <button class="tool-btn" data-tool="laser">LASER</button>
+      <button class="tool-btn" data-tool="wind">WIND</button>
+      <button class="tool-btn" data-tool="freeze">FREEZE</button>
+      <button class="tool-btn" data-tool="bomb">BOMB</button>
+    </div>
     <div id="controls-row">
       <div id="brush-info">
         <span id="brush-label">BRUSH</span>
@@ -1003,6 +1047,90 @@ class Simulation {
       }
     }
   }
+
+  // ── Tools ─────────────────────────────────────────────────────────
+
+  laserHeat(gx, gy, dirX, dirY) {
+    const len = Math.sqrt(dirX*dirX + dirY*dirY);
+    if (len < 0.001) return;
+    const nx = dirX/len, ny = dirY/len;
+    let px = gx + 0.5, py = gy + 0.5;
+    for (let t = 1; t < 180; t++) {
+      px += nx; py += ny;
+      const cx = Math.floor(px), cy = Math.floor(py);
+      if (!this.inBounds(cx,cy)) break;
+      const i = this.idx(cx,cy);
+      const mat = this.type[i];
+      if (mat === MAT.STONE || mat === MAT.CRYSTAL) break;
+      if (mat === MAT.GLASS) { this.type[i]=MAT.EMPTY; this.cv[i]=Math.random()*256|0; break; }
+      if (mat === MAT.EMPTY || mat === MAT.SMOKE || mat === MAT.STEAM || mat === MAT.FIRE) continue;
+      if (mat === MAT.WATER)  { this.type[i]=MAT.STEAM; this.life[i]=this._initLife(MAT.STEAM); }
+      else if (mat === MAT.ICE)  { this.type[i]=MAT.WATER; this.life[i]=0; }
+      else if (mat === MAT.SNOW) { this.type[i]=MAT.WATER; this.life[i]=0; }
+      else if (mat === MAT.SAND) { this.type[i]=MAT.LAVA; this.life[i]=0; }
+      else if (mat === MAT.GUNPOWDER) { this.cv[i]=Math.random()*256|0; this._explode(cx,cy); break; }
+      else if (mat === MAT.TNT)       { this.cv[i]=Math.random()*256|0; this._explodeBig(cx,cy); break; }
+      else { this.type[i]=MAT.FIRE; this.life[i]=this._initLife(MAT.FIRE); }
+      this.cv[i] = Math.random()*256|0;
+      break;
+    }
+  }
+
+  wind(cx, cy, radius) {
+    const r2 = radius*radius;
+    const cells = [];
+    for (let dy=-radius; dy<=radius; dy++) {
+      for (let dx=-radius; dx<=radius; dx++) {
+        const d2=dx*dx+dy*dy;
+        if (d2>r2||d2===0) continue;
+        const nx=cx+dx, ny=cy+dy;
+        if (!this.inBounds(nx,ny)) continue;
+        const mat=this.type[this.idx(nx,ny)];
+        const c=matCat(mat);
+        if (mat===MAT.EMPTY||c===CAT.SOLID||c===CAT.ALIVE) continue;
+        cells.push([dx,dy,d2]);
+      }
+    }
+    cells.sort((a,b)=>b[2]-a[2]);
+    for (const [dx,dy] of cells) {
+      const nx=cx+dx, ny=cy+dy;
+      if (!this.inBounds(nx,ny)) continue;
+      const ni=this.idx(nx,ny);
+      const mat=this.type[ni];
+      if (mat===MAT.EMPTY) continue;
+      const d=Math.sqrt(dx*dx+dy*dy);
+      const mx=Math.round(dx/d*2), my=Math.round(dy/d*2);
+      const tx=nx+mx, ty=ny+my;
+      if (!this.inBounds(tx,ty)) continue;
+      const ti=this.idx(tx,ty);
+      if (this.type[ti]===MAT.EMPTY) {
+        this.type[ti]=mat; this.life[ti]=this.life[ni]; this.cv[ti]=this.cv[ni];
+        this.type[ni]=MAT.EMPTY; this.life[ni]=0;
+      }
+    }
+  }
+
+  freeze(cx, cy, radius) {
+    const r2=radius*radius;
+    for (let dy=-radius; dy<=radius; dy++) {
+      for (let dx=-radius; dx<=radius; dx++) {
+        if (dx*dx+dy*dy>r2) continue;
+        const nx=cx+dx, ny=cy+dy;
+        if (!this.inBounds(nx,ny)) continue;
+        const i=this.idx(nx,ny);
+        switch(this.type[i]) {
+          case MAT.WATER:  if (Math.random()<0.18) { this.type[i]=MAT.ICE;   this.cv[i]=Math.random()*256|0; } break;
+          case MAT.LAVA:   this.type[i]=MAT.STONE; this.cv[i]=Math.random()*256|0; break;
+          case MAT.FIRE:   this.type[i]=MAT.SMOKE; this.life[i]=this._initLife(MAT.SMOKE); this.cv[i]=Math.random()*256|0; break;
+          case MAT.STEAM:  this.type[i]=MAT.WATER; this.life[i]=0; this.cv[i]=Math.random()*256|0; break;
+          case MAT.OIL:    if (Math.random()<0.07) { this.type[i]=MAT.ICE;   this.cv[i]=Math.random()*256|0; } break;
+          case MAT.MUD:    if (Math.random()<0.1)  { this.type[i]=MAT.STONE; this.cv[i]=Math.random()*256|0; } break;
+          case MAT.VIRUS:
+          case MAT.ANTIBODY: if (Math.random()<0.1) this.type[i]=MAT.EMPTY; break;
+        }
+      }
+    }
+  }
 }
 
 // =====================================================================
@@ -1042,6 +1170,59 @@ class Renderer {
       d[di]=r; d[di+1]=g; d[di+2]=b; d[di+3]=255;
     }
     this.ctx.putImageData(this.img, 0, 0);
+  }
+
+  drawLaserOverlay(gx, gy, dirX, dirY) {
+    const len = Math.sqrt(dirX*dirX + dirY*dirY);
+    if (len < 0.001) return;
+    const nx = dirX/len, ny = dirY/len;
+    const x1 = Math.max(0, Math.min(GRID_W-1, gx + nx*180));
+    const y1 = Math.max(0, Math.min(GRID_H-1, gy + ny*180));
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(255,80,20,0.92)';
+    ctx.shadowColor = 'rgba(255,140,40,1)';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.moveTo(gx + 0.5, gy + 0.5);
+    ctx.lineTo(x1 + 0.5, y1 + 0.5);
+    ctx.stroke();
+    // bright core
+    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = 'rgba(255,240,200,0.95)';
+    ctx.shadowBlur = 2;
+    ctx.beginPath();
+    ctx.moveTo(gx + 0.5, gy + 0.5);
+    ctx.lineTo(x1 + 0.5, y1 + 0.5);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  drawFreezeOverlay(gx, gy, radius) {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(140,230,255,0.55)';
+    ctx.lineWidth = 0.8;
+    ctx.shadowColor = 'rgba(100,200,255,0.7)';
+    ctx.shadowBlur = 5;
+    ctx.beginPath();
+    ctx.arc(gx + 0.5, gy + 0.5, radius, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  drawWindOverlay(gx, gy, radius) {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(120,180,255,0.45)';
+    ctx.lineWidth = 0.8;
+    ctx.shadowColor = 'rgba(100,160,255,0.6)';
+    ctx.shadowBlur = 4;
+    ctx.beginPath();
+    ctx.arc(gx + 0.5, gy + 0.5, radius, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.restore();
   }
 }
 
@@ -1232,7 +1413,33 @@ document.getElementById('ui-tab').addEventListener('click',()=>{
   document.getElementById('ui-overlay').classList.toggle('collapsed',uiCollapsed);
 });
 
-// Input
+// ── Tool state ──
+let activeTool  = null;  // 'laser' | 'wind' | 'freeze' | 'bomb' | null
+let toolDown    = false;
+let toolGX=0, toolGY=0;
+let laserDirX=1, laserDirY=0;
+let prevToolGX=-1, prevToolGY=-1;
+
+const TOOL_COLORS = { laser:'#f76', wind:'#8cf', freeze:'#7ef', bomb:'#fa6' };
+
+function selectTool(name) {
+  activeTool = activeTool===name ? null : name;
+  document.querySelectorAll('.tool-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tool===activeTool);
+  });
+  if (activeTool) {
+    const dot=document.getElementById('tab-dot');
+    const tn=document.getElementById('tab-name');
+    if (dot) dot.style.background=TOOL_COLORS[activeTool]||'#fff';
+    if (tn)  tn.textContent=activeTool.toUpperCase();
+  }
+}
+
+document.querySelectorAll('.tool-btn').forEach(b=>{
+  b.addEventListener('click',()=>selectTool(b.dataset.tool));
+});
+
+// ── Input ──
 let lastGX=-1, lastGY=-1;
 
 function paintAt(sx,sy,erase) {
@@ -1259,12 +1466,30 @@ let isDown=false, isRight=false;
 
 canvas.addEventListener('mousedown',e=>{
   e.preventDefault();
+  if (activeTool) {
+    if (e.button!==0) return;
+    toolDown=true;
+    const {gx,gy}=renderer.screenToGrid(e.clientX,e.clientY);
+    toolGX=gx; toolGY=gy; prevToolGX=gx; prevToolGY=gy;
+    if (activeTool==='bomb') { sim._explodeBig(gx,gy); toolDown=false; }
+    return;
+  }
   if(e.button===0)isDown=true;
   if(e.button===2)isRight=true;
   lastGX=lastGY=-1;
   paintAt(e.clientX,e.clientY,e.button===2||eraseMode);
 });
+
 canvas.addEventListener('mousemove',e=>{
+  if (activeTool) {
+    const {gx,gy}=renderer.screenToGrid(e.clientX,e.clientY);
+    if (toolDown && activeTool==='laser' && (gx!==prevToolGX||gy!==prevToolGY)) {
+      laserDirX=gx-prevToolGX; laserDirY=gy-prevToolGY;
+    }
+    prevToolGX=toolGX; prevToolGY=toolGY;
+    toolGX=gx; toolGY=gy;
+    return;
+  }
   if(!isDown&&!isRight)return;
   const erase=isRight||(isDown&&eraseMode);
   const {gx,gy}=renderer.screenToGrid(e.clientX,e.clientY);
@@ -1272,8 +1497,13 @@ canvas.addEventListener('mousemove',e=>{
   else sim.paint(gx,gy,brushSize,erase?MAT.EMPTY:selectedMat);
   lastGX=gx; lastGY=gy;
 });
-canvas.addEventListener('mouseup',   e=>{if(e.button===0)isDown=false;if(e.button===2)isRight=false;});
-canvas.addEventListener('mouseleave',()=>{isDown=false;isRight=false;});
+
+canvas.addEventListener('mouseup',e=>{
+  toolDown=false;
+  if(e.button===0)isDown=false;
+  if(e.button===2)isRight=false;
+});
+canvas.addEventListener('mouseleave',()=>{ toolDown=false; isDown=false; isRight=false; });
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 
 let ltx=-1, lty=-1;
@@ -1282,19 +1512,34 @@ canvas.addEventListener('touchstart',e=>{
   e.preventDefault();
   const t=e.touches[0];
   const {gx,gy}=renderer.screenToGrid(t.clientX,t.clientY);
+  if (activeTool) {
+    toolDown=true; toolGX=gx; toolGY=gy; prevToolGX=gx; prevToolGY=gy;
+    if (activeTool==='bomb') { sim._explodeBig(gx,gy); toolDown=false; }
+    return;
+  }
   ltx=gx; lty=gy;
   paintAt(t.clientX,t.clientY,eraseMode);
 },{passive:false});
+
 canvas.addEventListener('touchmove',e=>{
   e.preventDefault();
   const t=e.touches[0];
   const {gx,gy}=renderer.screenToGrid(t.clientX,t.clientY);
+  if (activeTool) {
+    if (toolDown && activeTool==='laser' && (gx!==prevToolGX||gy!==prevToolGY)) {
+      laserDirX=gx-prevToolGX; laserDirY=gy-prevToolGY;
+    }
+    prevToolGX=toolGX; prevToolGY=toolGY;
+    toolGX=gx; toolGY=gy;
+    return;
+  }
   if(ltx>=0)paintLine(ltx,lty,gx,gy,eraseMode);
   ltx=gx; lty=gy;
 },{passive:false});
-canvas.addEventListener('touchend',()=>{ltx=lty=-1;});
 
-// Game loop
+canvas.addEventListener('touchend',()=>{ toolDown=false; ltx=lty=-1; });
+
+// ── Game loop ──
 const FRAME_MS=1000/60;
 let lastTime=0;
 
@@ -1302,8 +1547,22 @@ function loop(ts){
   requestAnimationFrame(loop);
   if(ts-lastTime<FRAME_MS-1)return;
   lastTime=ts;
+
+  if (toolDown && activeTool) {
+    if      (activeTool==='laser')  sim.laserHeat(toolGX,toolGY,laserDirX,laserDirY);
+    else if (activeTool==='wind')   sim.wind(toolGX,toolGY,14);
+    else if (activeTool==='freeze') sim.freeze(toolGX,toolGY,10);
+  }
+
   sim.step();
   renderer.draw(sim);
+
+  if (toolDown && activeTool==='laser'&&(laserDirX!==0||laserDirY!==0))
+    renderer.drawLaserOverlay(toolGX,toolGY,laserDirX,laserDirY);
+  if (toolDown && activeTool==='freeze')
+    renderer.drawFreezeOverlay(toolGX,toolGY,10);
+  if (toolDown && activeTool==='wind')
+    renderer.drawWindOverlay(toolGX,toolGY,14);
 }
 
 requestAnimationFrame(loop);
